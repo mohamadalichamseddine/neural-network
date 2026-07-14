@@ -1,2 +1,3 @@
 plan.txt
 .venv
+data/mnist.pkl
