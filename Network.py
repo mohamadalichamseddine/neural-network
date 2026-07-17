@@ -18,18 +18,11 @@ class Network:
             # Each column corresponds to one neuron in the previous layer
             weightMatrix = np.random.randn(next_layer_size, prev_layer_size)
             self.weights.append(weightMatrix)
-
-    @staticmethod
-    def _sigmoid(z):
-        # z is a vector or Numpy array
-        # z = w . a + b
-        # return numpy array z'
-        return 1.0 / (1.0 + np.exp(-z))
     
     def feedforward(self, a: np.ndarray) -> np.ndarray :
         # Return the output of the network, given a is the input
         for w, b in zip(self.weights, self.biases):
-            a = self._sigmoid(np.dot(w, a) + b)
+            a = sigmoid(np.dot(w, a) + b)
         return a
     
     def SGD(self, training_data, epochs, mini_batch_size, learningRate, test_data = None):
@@ -82,15 +75,66 @@ class Network:
         # Updating the biases:
         self.biases = [b - (learningRate / len(mini_batch_data)) * nb
                         for b, nb in zip(self.biases, del_b)]
-        
-        return None
     
     def backpropagation(self, x, y):
-        # Backpropagation algorithm
-        # calculates the gradients of the cost function for one training example.
-        # How should each weight and bias change to reduce the cost for this example?
-        return None
+        # Compute the gradients of the cost function
+        """ Return a tuple (del_b, del_w) representing the gradient for the
+            cost function C_x.
+            del_b and del_w are lists of numpy array objects (one for each layer).
+        """
+        del_b = [np.zeros(b.shape) for b in self.biases]
+        del_w = [np.zeros(w.shape) for w in self.weights]
+
+        #  Feedforward
+        activation = x
+        activationsByLayer = [x]
+        weightedInputsByLayer = []
+        for b, w in zip(self.biases, self.weights):
+            z = np.dot(w, activation) + b
+            weightedInputsByLayer.append(z)
+            activation = sigmoid(z)
+            activationsByLayer.append(activation)
+
+        # Backward pass:
+        outputLayerActivations = activationsByLayer[-1]
+        outputLayerWeightedInputs = weightedInputsByLayer[-1]
+
+        # δ^L = ∂C/∂a^L ⊙ σ'(z^L)
+        delta = self.cost_derivative(outputLayerActivations, y) * sigmoid_prime(outputLayerWeightedInputs)
+
+        # ∂C/∂b^L = δ^L
+        del_b[-1] = delta
+
+        # ∂C/∂W^L = δ^L (a^(L-1))^T
+        del_w[-1] = np.dot(delta, activationsByLayer[-2].transpose())
+
+        # Move backward through the hidden layers
+        for layer in range(2, self.num_layers):
+            currentLayerWeightedInput = weightedInputsByLayer[-layer]
+            sp = sigmoid_prime(currentLayerWeightedInput)
+
+            # δ^l = (W^(l+1))^T δ^(l+1) ⊙ σ'(z^l)
+            delta = np.dot(self.weights[-layer + 1].transpose(), delta) * sp
+
+            # ∂C/∂b^l = δ^l
+            del_b[-layer] = delta
+
+            # ∂C/∂W^l = δ^l (a^(l-1))^T
+            del_w[-layer] = np.dot(delta, activationsByLayer[-layer - 1].transpose())
+        
+        return (del_b, del_w)
     
+    def cost_derivative(self, output_activations, y):
+        """Return the vector of partial derivatives del(C_x)/del(a) for the output activations"""
+        return (output_activations - y) 
+
+def sigmoid(z):
+    # z = w . a + b
+    return 1.0 / (1.0 + np.exp(-z))
+
+def sigmoid_prime(z):
+    return sigmoid(z) * (1 - sigmoid(z))
+
 
 if __name__ == "__main__":
     network = Network([784, 30, 10])
