@@ -109,7 +109,7 @@ class Network:
         del_w[-1] = np.dot(delta, activationsByLayer[-2].transpose())
 
         # Move backward through the hidden layers
-        for layer in range(2, self.num_layers):
+        for layer in range(2, self.numLayers):
             currentLayerWeightedInput = weightedInputsByLayer[-layer]
             sp = sigmoid_prime(currentLayerWeightedInput)
 
@@ -128,18 +128,13 @@ class Network:
         """Return the vector of partial derivatives del(C_x)/del(a) for the output activations"""
         return (output_activations - y) 
 
+    def evaluate(self, test_data):
+        test_results = [(np.argmax(self.feedforward(x)), y) for (x, y) in test_data]
+        return sum(int(x == y) for (x, y) in test_results)
+
 def sigmoid(z):
     # z = w . a + b
     return 1.0 / (1.0 + np.exp(-z))
 
 def sigmoid_prime(z):
     return sigmoid(z) * (1 - sigmoid(z))
-
-
-if __name__ == "__main__":
-    network = Network([784, 30, 10])
-
-    sample_input = np.random.randn(784, 1)
-    output = network.feedforward(sample_input)
-
-    print(output.shape)
