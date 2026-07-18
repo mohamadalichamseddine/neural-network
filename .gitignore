@@ -1,3 +1,5 @@
 plan.txt
 .venv
 data/mnist.pkl
+__pycache__/
+models/
