@@ -3,6 +3,8 @@ import gzip
 
 import numpy as np
 
+from utils import vectorized_result 
+
 def load_data():
     # returned tuple
     # │
@@ -65,10 +67,3 @@ def load_data_wrapper():
     test_data = list(zip(test_inputs, te_d[1]))
 
     return training_data, validation_data, test_data
-
-
-def vectorized_result(j):
-    # Convert a digit from 0 to 9 into a one-hot column vector
-    result = np.zeros((10, 1))
-    result[j] = 1.0
-    return result
